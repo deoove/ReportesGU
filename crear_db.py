@@ -2,6 +2,7 @@
 Script para generar/actualizar la base de datos SQLite desde el Excel planilla_dov.xls
 Uso: python3 crear_db.py
 """
+import re
 import xlrd
 import sqlite3
 
@@ -15,7 +16,14 @@ def excel_date(val, wb):
     except:
         pass
     s = str(val).strip()
-    return s if s not in ('0.0', '0') else ''
+    if s in ('0.0', '0'):
+        return ''
+    # Normaliza fechas escritas como texto (ej. "20.03.2026" o "20-03-2026") a DD/MM/YYYY
+    m = re.match(r'^(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2,4})$', s)
+    if m:
+        d, mo, y = m.groups()
+        return f"{int(d):02d}/{int(mo):02d}/{y}"
+    return s
 
 def clean(val):
     if val == '' or val is None:
