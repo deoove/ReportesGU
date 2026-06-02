@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro General - Reportes GU</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+    }
+    header {
+      background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    header h1 { font-size: 1.5rem; font-weight: 700; }
+    header p { font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }
+    .container { padding: 24px 20px; max-width: 1800px; margin: 0 auto; }
+
+    .stats-bar {
+      display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .stat-card {
+      background: white; border-radius: 10px; padding: 14px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      min-width: 140px; text-align: center;
+      border-top: 3px solid #2b6cb0;
+    }
+    .stat-card .val { font-size: 1.8rem; font-weight: 700; color: #2b6cb0; }
+    .stat-card .lbl { font-size: 0.75rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .toolbar {
+      background: white; border-radius: 10px; padding: 16px 20px;
+      margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    }
+    .toolbar input, .toolbar select {
+      border: 1px solid #e2e8f0; border-radius: 6px;
+      padding: 8px 12px; font-size: 0.9rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    .toolbar input:focus, .toolbar select:focus { border-color: #2b6cb0; }
+    .toolbar input { min-width: 220px; }
+    .toolbar label { font-size: 0.85rem; color: #4a5568; white-space: nowrap; }
+
+    .table-wrap {
+      background: white; border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    thead tr { background: #2b6cb0; color: white; }
+    thead th {
+      padding: 11px 14px; text-align: left; white-space: nowrap;
+      font-weight: 600; letter-spacing: 0.03em;
+      cursor: pointer; user-select: none;
+      position: sticky; top: 0;
+    }
+    thead th:hover { background: #2c5282; }
+    thead th .sort-icon { margin-left: 4px; opacity: 0.6; font-size: 0.7em; }
+    tbody tr { border-bottom: 1px solid #edf2f7; transition: background 0.15s; }
+    tbody tr:hover { background: #ebf4ff; }
+    tbody td { padding: 9px 14px; white-space: nowrap; }
+    tbody tr:nth-child(even) { background: #f7fafc; }
+    tbody tr:nth-child(even):hover { background: #ebf4ff; }
+
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .badge-bueno { background: #c6f6d5; color: #276749; }
+    .badge-malo  { background: #fed7d7; color: #9b2c2c; }
+    .badge-normal{ background: #bee3f8; color: #2c5282; }
+    .badge-pendiente{ background: #fefcbf; color: #744210; }
+
+    .detail-panel {
+      display: none; position: fixed; top: 0; right: 0;
+      width: 420px; height: 100vh; overflow-y: auto;
+      background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      z-index: 100; padding: 0;
+    }
+    .detail-panel.open { display: block; }
+    .detail-header {
+      background: linear-gradient(135deg, #1a365d, #2b6cb0);
+      color: white; padding: 20px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .detail-header h2 { font-size: 1.1rem; }
+    .detail-close {
+      background: rgba(255,255,255,0.2); border: none; color: white;
+      width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+      font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+    }
+    .detail-close:hover { background: rgba(255,255,255,0.35); }
+    .detail-body { padding: 20px 24px; }
+    .detail-section { margin-bottom: 20px; }
+    .detail-section h3 {
+      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #718096; margin-bottom: 10px; padding-bottom: 4px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+    .detail-row .lbl { font-size: 0.8rem; color: #718096; flex-shrink: 0; }
+    .detail-row .val { font-size: 0.85rem; font-weight: 500; text-align: right; color: #2d3748; }
+    .overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 99;
+    }
+    .overlay.open { display: block; }
+
+    .count-label { font-size: 0.85rem; color: #718096; margin-left: auto; }
+    .no-results { padding: 40px; text-align: center; color: #a0aec0; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Registro General de ODS</h1>
+    <p>Sistema de Gestión de Órdenes de Servicio</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="stats-bar" id="statsBar"></div>
+
+  <div class="toolbar">
+    <label>Buscar:</label>
+    <input type="text" id="searchInput" placeholder="ODS, inspector, N° serie, distrito...">
+    <label>Distrito:</label>
+    <select id="filterDistrito"><option value="">Todos</option></select>
+    <label>Inspector:</label>
+    <select id="filterInspector"><option value="">Todos</option></select>
+    <label>Estado:</label>
+    <select id="filterEstado">
+      <option value="">Todos</option>
+      <option value="Bueno">Bueno</option>
+      <option value="Malo">Malo</option>
+    </select>
+    <span class="count-label" id="countLabel"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table id="mainTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable('ods')">ODS <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('fecha_generacion')">F. Generación <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('fecha_entrega')">F. Entrega <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('fecha_inspeccion')">F. Inspección <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('inspector')">Inspector <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('distrito')">Distrito <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('nro_serie')">N° Serie <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('material')">Material <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('lectura')">Lectura <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('funcionamiento')">Funcionamiento <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('estado_conexion')">Estado Cx. <span class="sort-icon">⇅</span></th>
+          <th onclick="sortTable('resid')">Tipo <span class="sort-icon">⇅</span></th>
+          <th>Detalle</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="no-results" id="noResults" style="display:none">No se encontraron resultados.</div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <h2 id="detailTitle">Detalle ODS</h2>
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<script>
+const DATA = [
+  {"id":1,"ods":"30139706","ubicacion_tecnica":"10743","sem":"","bim":"","anio":"","fecha_generacion":"20/04/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"6","analisis":"","repite":"","fecha_entrega":"","inspector":"MOYANO, GUSTAVO","exp_ref":"6005923","nro_serie":"A24082047","material":"KRONKE","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
+  {"id":2,"ods":"30170286","ubicacion_tecnica":"18021","sem":"","bim":"","anio":"","fecha_generacion":"21/04/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"101","analisis":"","repite":"","fecha_entrega":"","inspector":"","exp_ref":"101009394","nro_serie":"10OF099990","material":"WOLTEX","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
+  {"id":3,"ods":"30210073","ubicacion_tecnica":"31325","sem":"","bim":"","anio":"","fecha_generacion":"20/03/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"202","analisis":"","repite":"","fecha_entrega":"30/03/2026","inspector":"MELGAR, MATIAS","exp_ref":"202220997","nro_serie":"A20080286","material":"KRHONE","lectura":"7007","fecha_inspeccion":"20/05/2026","hora_llegada":"12:05","hora_salida":"12:10","funcionamiento":"Normal","resid":"No Residencial","actividad":"Media","corte":"","precinto":"Normal","pozo":"No","valvula_retencion":"","estado_conexion":"Bueno","tipo_caja":"OSN","movil":"af714qi","cx_libres":"No","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
+  {"id":4,"ods":"30292508","ubicacion_tecnica":"32863","sem":"","bim":"","anio":"","fecha_generacion":"22/06/2020","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"203","analisis":"","repite":"","fecha_entrega":"","inspector":"","exp_ref":"203353188","nro_serie":"A19085724","material":"KR - WFX","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
+  {"id":5,"ods":"30342286","ubicacion_tecnica":"32720","sem":"","bim":"","anio":"","fecha_generacion":"13/03/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"203","analisis":"","repite":"","fecha_entrega":"","inspector":"","exp_ref":"203321313","nro_serie":"A24082030","material":"KRHONE","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
+  {"id":6,"ods":"30372648","ubicacion_tecnica":"","sem":"","bim":"","anio":"","fecha_generacion":"15/09/2025","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"102","analisis":"","repite":"","fecha_entrega":"15/10/2025","inspector":"SUAREZ, MANUEL","exp_ref":"","nro_serie":"A24082051","material":"KROHNE","lectura":"6309","fecha_inspeccion":"20/10/2025","hora_llegada":"09:40","hora_salida":"10:00","funcionamiento":"Normal","resid":"No Residencial","actividad":"Media","corte":"","precinto":"","pozo":"No","valvula_retencion":"No","estado_conexion":"Malo","tipo_caja":"AASA","movil":"AF709AN","cx_libres":"No","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
+  {"id":7,"ods":"30423743","ubicacion_tecnica":"33302291","sem":"","bim":"","anio":"","fecha_generacion":"21/04/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"101","analisis":"","repite":"","fecha_entrega":"28/04/2026","inspector":"MARTEL, EDUARDO","exp_ref":"101045649","nro_serie":"25101972","material":"AIMEI","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
+  {"id":8,"ods":"30453355","ubicacion_tecnica":"26836","sem":"","bim":"","anio":"","fecha_generacion":"15/10/2021","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"301","analisis":"","repite":"","fecha_entrega":"03/09/2025","inspector":"","exp_ref":"","nro_serie":"10OF099974","material":"ACT-WOLTEX","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
+  {"id":9,"ods":"30496524","ubicacion_tecnica":"16213","sem":"","bim":"","anio":"","fecha_generacion":"10/01/2022","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"103","analisis":"","repite":"","fecha_entrega":"22/04/2025","inspector":"GUTIERREZ, RUBEN","exp_ref":"","nro_serie":"2310009268","material":"AIMEI MD-AP","lectura":"56","fecha_inspeccion":"28/04/2025","hora_llegada":"","hora_salida":"","funcionamiento":"Normal","resid":"No Residencial","actividad":"Media","corte":"","precinto":"Normal","pozo":"No","valvula_retencion":"","estado_conexion":"Bueno","tipo_caja":"AASA","movil":"AG386FF","cx_libres":"No","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""}
+];
+
+let sortCol = 'ods', sortAsc = true;
+let filtered = [...DATA];
+
+function badgeEstado(val) {
+  if (!val) return '<span style="color:#a0aec0">—</span>';
+  const cls = val === 'Bueno' ? 'badge-bueno' : val === 'Malo' ? 'badge-malo' : val === 'Normal' ? 'badge-normal' : 'badge-pendiente';
+  return `<span class="badge ${cls}">${val}</span>`;
+}
+
+function buildStats() {
+  const total = DATA.length;
+  const conInspector = DATA.filter(d => d.inspector).length;
+  const conInspeccion = DATA.filter(d => d.fecha_inspeccion).length;
+  const buenos = DATA.filter(d => d.estado_conexion === 'Bueno').length;
+  const malos = DATA.filter(d => d.estado_conexion === 'Malo').length;
+  const distritos = new Set(DATA.map(d => d.distrito).filter(Boolean)).size;
+
+  const stats = [
+    {val: total, lbl: 'Total ODS'},
+    {val: conInspector, lbl: 'Con Inspector'},
+    {val: conInspeccion, lbl: 'Inspeccionados'},
+    {val: buenos, lbl: 'Estado Bueno'},
+    {val: malos, lbl: 'Estado Malo'},
+    {val: distritos, lbl: 'Distritos'},
+  ];
+  document.getElementById('statsBar').innerHTML = stats.map(s =>
+    `<div class="stat-card"><div class="val">${s.val}</div><div class="lbl">${s.lbl}</div></div>`
+  ).join('');
+}
+
+function buildFilters() {
+  const distritos = [...new Set(DATA.map(d => d.distrito).filter(Boolean))].sort((a,b) => a-b);
+  const sel = document.getElementById('filterDistrito');
+  distritos.forEach(d => sel.innerHTML += `<option value="${d}">${d}</option>`);
+
+  const insp = [...new Set(DATA.map(d => d.inspector).filter(Boolean))].sort();
+  const sel2 = document.getElementById('filterInspector');
+  insp.forEach(i => sel2.innerHTML += `<option value="${i}">${i}</option>`);
+}
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const dist = document.getElementById('filterDistrito').value;
+  const insp = document.getElementById('filterInspector').value;
+  const est = document.getElementById('filterEstado').value;
+
+  filtered = DATA.filter(d => {
+    const searchFields = [d.ods, d.inspector, d.nro_serie, d.distrito, d.material, d.movil, d.exp_ref].join(' ').toLowerCase();
+    if (q && !searchFields.includes(q)) return false;
+    if (dist && d.distrito !== dist) return false;
+    if (insp && d.inspector !== insp) return false;
+    if (est && d.estado_conexion !== est) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    let va = a[sortCol] || '', vb = b[sortCol] || '';
+    if (!isNaN(va) && !isNaN(vb)) { va = parseFloat(va)||0; vb = parseFloat(vb)||0; }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  document.getElementById('countLabel').textContent = `${filtered.length} de ${DATA.length} registros`;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    document.getElementById('noResults').style.display = 'block';
+    return;
+  }
+  document.getElementById('noResults').style.display = 'none';
+
+  tbody.innerHTML = filtered.map(d => `
+    <tr>
+      <td><strong>${d.ods}</strong></td>
+      <td>${d.fecha_generacion || '—'}</td>
+      <td>${d.fecha_entrega || '—'}</td>
+      <td>${d.fecha_inspeccion || '—'}</td>
+      <td>${d.inspector || '<span style="color:#a0aec0">Sin asignar</span>'}</td>
+      <td><span class="badge badge-pendiente">${d.distrito}</span></td>
+      <td>${d.nro_serie || '—'}</td>
+      <td>${d.material || '—'}</td>
+      <td>${d.lectura || '—'}</td>
+      <td>${badgeEstado(d.funcionamiento)}</td>
+      <td>${badgeEstado(d.estado_conexion)}</td>
+      <td>${d.resid ? d.resid.trim() : '—'}</td>
+      <td><button onclick="openDetail(${d.id})" style="background:#2b6cb0;color:white;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:0.78rem">Ver</button></td>
+    </tr>
+  `).join('');
+}
+
+function sortTable(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  applyFilters();
+}
+
+function openDetail(id) {
+  const d = DATA.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('detailTitle').textContent = `ODS ${d.ods}`;
+
+  const sections = [
+    { title: 'Identificación', fields: [
+      ['ODS', d.ods], ['Ubicación Técnica', d.ubicacion_tecnica], ['Expediente Ref.', d.exp_ref],
+      ['N° Serie', d.nro_serie], ['Material', d.material], ['Distrito', d.distrito],
+    ]},
+    { title: 'Fechas', fields: [
+      ['F. Generación', d.fecha_generacion], ['F. Entrega', d.fecha_entrega],
+      ['F. Inspección', d.fecha_inspeccion], ['Hora Llegada', d.hora_llegada], ['Hora Salida', d.hora_salida],
+      ['F. Comunicación', d.fecha_comunicacion],
+    ]},
+    { title: 'Inspección', fields: [
+      ['Inspector', d.inspector], ['Lectura', d.lectura], ['Funcionamiento', d.funcionamiento],
+      ['Estado Conexión', d.estado_conexion], ['Tipo Caja', d.tipo_caja], ['Móvil', d.movil],
+      ['Tipo', d.resid], ['Actividad', d.actividad],
+    ]},
+    { title: 'Condiciones', fields: [
+      ['Precinto', d.precinto], ['Pozo', d.pozo], ['Válvula Retención', d.valvula_retencion],
+      ['Cx. Libres', d.cx_libres], ['Corte', d.corte],
+    ]},
+    { title: 'Gestión', fields: [
+      ['Resuelve', d.resuelve], ['Motivo', d.motivo], ['ZREC', d.zrec],
+      ['ODS Recambio', d.ods_recambio], ['Alto Consumo', d.alto_consumo],
+      ['N° Contacto', d.nro_contacto], ['Observaciones', d.observaciones],
+    ]},
+  ];
+
+  document.getElementById('detailBody').innerHTML = sections.map(s => `
+    <div class="detail-section">
+      <h3>${s.title}</h3>
+      ${s.fields.filter(([,v]) => v).map(([l,v]) => `
+        <div class="detail-row">
+          <span class="lbl">${l}</span>
+          <span class="val">${v}</span>
+        </div>`).join('') || '<div style="color:#a0aec0;font-size:0.82rem">Sin datos</div>'}
+    </div>
+  `).join('');
+
+  document.getElementById('detailPanel').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('filterDistrito').addEventListener('change', applyFilters);
+document.getElementById('filterInspector').addEventListener('change', applyFilters);
+document.getElementById('filterEstado').addEventListener('change', applyFilters);
+
+buildStats();
+buildFilters();
+applyFilters();
+</script>
+</body>
+</html>
