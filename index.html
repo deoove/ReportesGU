@@ -82,18 +82,28 @@
     .badge-normal  { background: #bee3f8; color: #2c5282; }
     .badge-pendiente { background: #fefcbf; color: #744210; }
 
-    /* Detail panel */
+    /* Detail modal */
     .detail-panel {
-      display: none; position: fixed; top: 0; right: 0;
-      width: 420px; height: 100vh; overflow-y: auto;
-      background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.15);
-      z-index: 200; padding: 0;
+      display: none; position: fixed; inset: 0; z-index: 200;
+      align-items: center; justify-content: center; padding: 20px;
     }
-    .detail-panel.open { display: block; }
+    .detail-panel.open { display: flex; }
+    .detail-box {
+      position: relative; background: white; border-radius: 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+      width: 100%; max-width: 560px; max-height: 85vh;
+      display: flex; flex-direction: column; overflow: hidden;
+      animation: modalIn 0.2s ease-out;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
     .detail-header {
       background: linear-gradient(135deg, #1a365d, #2b6cb0);
       color: white; padding: 20px 24px;
       display: flex; justify-content: space-between; align-items: center;
+      flex-shrink: 0;
     }
     .detail-header h2 { font-size: 1.1rem; }
     .detail-close {
@@ -102,7 +112,7 @@
       font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
     }
     .detail-close:hover { background: rgba(255,255,255,0.35); }
-    .detail-body { padding: 20px 24px; }
+    .detail-body { padding: 20px 24px; overflow-y: auto; }
     .detail-section { margin-bottom: 20px; }
     .detail-section h3 {
       font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
@@ -111,12 +121,6 @@
     .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
     .detail-row .lbl { font-size: 0.8rem; color: #718096; flex-shrink: 0; }
     .detail-row .val { font-size: 0.85rem; font-weight: 500; text-align: right; color: #2d3748; }
-
-    /* Overlay base */
-    .overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 150;
-    }
-    .overlay.open { display: block; }
 
     /* Modal duplicados */
     .modal {
@@ -232,16 +236,16 @@
   </div>
 </div>
 
-<!-- Overlay para panel detalle -->
-<div class="overlay" id="overlay" onclick="closeDetail()"></div>
-
-<!-- Panel detalle -->
+<!-- Modal detalle -->
 <div class="detail-panel" id="detailPanel">
-  <div class="detail-header">
-    <h2 id="detailTitle">Detalle ODS</h2>
-    <button class="detail-close" onclick="closeDetail()">✕</button>
+  <div class="modal-backdrop" onclick="closeDetail()"></div>
+  <div class="detail-box">
+    <div class="detail-header">
+      <h2 id="detailTitle">Detalle ODS</h2>
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
   </div>
-  <div class="detail-body" id="detailBody"></div>
 </div>
 
 <!-- Modal duplicados -->
@@ -642,12 +646,10 @@ function openDetail(id) {
   `).join('');
 
   document.getElementById('detailPanel').classList.add('open');
-  document.getElementById('overlay').classList.add('open');
 }
 
 function closeDetail() {
   document.getElementById('detailPanel').classList.remove('open');
-  document.getElementById('overlay').classList.remove('open');
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -665,6 +667,11 @@ document.getElementById('searchInput').addEventListener('input', applyFilters);
 document.getElementById('filterDistrito').addEventListener('change', applyFilters);
 document.getElementById('filterInspector').addEventListener('change', applyFilters);
 document.getElementById('filterEstado').addEventListener('change', applyFilters);
+
+// Cerrar modal de detalle con la tecla Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+});
 
 loadData();
 rebuildFilters();
