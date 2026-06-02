@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro General - Reportes GU</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #2d3748; }
@@ -310,20 +311,40 @@ let filtered = [];
 let pendingNew = [];
 let pendingDups = [];
 
-// ── LocalStorage ──────────────────────────────────────────────────────────────
-function loadData() {
+// ── Carga de datos desde reportes.db (sql.js) ─────────────────────────────────
+// La base de datos reportes.db es la fuente de la verdad: se lee en cada carga.
+async function loadData() {
   try {
-    const saved = localStorage.getItem('reportesgu_data');
-    if (saved) {
-      DATA = JSON.parse(saved);
-      return;
-    }
-  } catch(e) {}
-  DATA = BASE_DATA.map(d => ({...d}));
+    const SQL = await initSqlJs({
+      locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
+    });
+    const resp = await fetch('reportes.db', {cache: 'no-store'});
+    if (!resp.ok) throw new Error('No se pudo abrir reportes.db (HTTP ' + resp.status + ')');
+    const buf = await resp.arrayBuffer();
+    const db = new SQL.Database(new Uint8Array(buf));
+    const res = db.exec('SELECT * FROM registro_general');
+    db.close();
+
+    if (!res.length) { DATA = []; return; }
+
+    const cols = res[0].columns;
+    DATA = res[0].values.map(row => {
+      const obj = {};
+      cols.forEach((c, i) => { obj[c] = row[i] == null ? '' : String(row[i]); });
+      return obj;
+    });
+    showToast(`Base de datos cargada: ${DATA.length} registros desde reportes.db`, 'success');
+  } catch(e) {
+    // Fallback: si se abre con doble clic (file://) el fetch falla por seguridad del navegador
+    DATA = BASE_DATA.map(d => ({...d}));
+    showToast('No se pudo leer reportes.db — usando datos embebidos. Abrí la página con un servidor local (python -m http.server).', 'warn');
+    console.warn('loadData fallback:', e);
+  }
 }
 
 function saveData() {
-  try { localStorage.setItem('reportesgu_data', JSON.stringify(DATA)); } catch(e) {}
+  // Nota: el navegador no puede escribir el archivo reportes.db en el disco.
+  // Los cambios hechos al subir un Excel son temporales para esta sesión.
 }
 
 // ── Parseo de Excel con SheetJS ───────────────────────────────────────────────
@@ -673,9 +694,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeDetail();
 });
 
-loadData();
-rebuildFilters();
-applyFilters();
+(async function init() {
+  await loadData();
+  rebuildFilters();
+  applyFilters();
+})();
 </script>
 </body>
 </html>
