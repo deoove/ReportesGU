@@ -530,3 +530,53 @@ tr.new-row td:first-child {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Paginación ───────────────────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px 0 4px;
+  flex-wrap: wrap;
+}
+
+.pag-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: white;
+  color: #4a5568;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pag-btn:hover:not(.disabled):not(.active) {
+  background: #ebf4ff;
+  border-color: #2b6cb0;
+  color: #2b6cb0;
+}
+
+.pag-btn.active {
+  background: #2b6cb0;
+  border-color: #2b6cb0;
+  color: white;
+  font-weight: 700;
+  cursor: default;
+}
+
+.pag-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pag-ellipsis {
+  padding: 0 4px;
+  color: #a0aec0;
+  font-size: 0.9rem;
+  line-height: 36px;
+}

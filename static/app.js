@@ -10,6 +10,8 @@ let newOdsSet    = new Set();
 let sortCol      = 'ods';
 let sortAsc      = true;
 let filtered     = [];
+let currentPage  = 1;
+const PAGE_SIZE  = 20;
 let pendingNew   = [];
 let pendingDups  = [];
 let odsBorrarActual  = null;
@@ -459,9 +461,9 @@ function applyFilters() {
   filtered = DATA.filter(d => {
     const s = [d.ods, d.inspector, d.nro_serie, d.distrito, d.material, d.movil, d.exp_ref]
       .join(' ').toLowerCase();
-    return (!q    || s.includes(q))          &&
-           (!dist || d.distrito  === dist)   &&
-           (!insp || d.inspector === insp)   &&
+    return (!q    || s.includes(q))        &&
+           (!dist || d.distrito  === dist) &&
+           (!insp || d.inspector === insp) &&
            (!est  || d.estado_conexion === est);
   });
 
@@ -471,21 +473,32 @@ function applyFilters() {
     return va < vb ? (sortAsc ? -1 : 1) : va > vb ? (sortAsc ? 1 : -1) : 0;
   });
 
+  currentPage = 1;
   renderTable();
 }
 
 function renderTable() {
-  const tbody = document.getElementById('tableBody');
-  document.getElementById('countLabel').textContent = `${filtered.length} de ${DATA.length} registros`;
+  const tbody      = document.getElementById('tableBody');
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+
+  // Corregir página si quedó fuera de rango
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page  = filtered.slice(start, start + PAGE_SIZE);
+
+  document.getElementById('countLabel').textContent =
+    `${filtered.length} de ${DATA.length} registros`;
 
   if (!filtered.length) {
     tbody.innerHTML = '';
     document.getElementById('noResults').style.display = 'block';
+    document.getElementById('pagination').innerHTML = '';
     return;
   }
   document.getElementById('noResults').style.display = 'none';
 
-  tbody.innerHTML = filtered.map(d => `
+  tbody.innerHTML = page.map(d => `
     <tr class="${newOdsSet.has(d.ods) ? 'new-row' : ''}">
       <td>
         <strong>${d.ods}</strong>
@@ -508,11 +521,52 @@ function renderTable() {
         <button class="btn-accion btn-borrar" onclick="verBorrar('${d.ods}')">Borrar</button>
       </td>
     </tr>`).join('');
+
+  renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+
+  // Muestra máximo 7 botones: primero, últimos, y ventana alrededor de la página actual
+  const pages = [];
+  const delta = 2;
+  const range = [];
+
+  for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+    range.push(i);
+  }
+
+  pages.push(1);
+  if (range[0] > 2) pages.push('...');
+  range.forEach(p => pages.push(p));
+  if (range[range.length - 1] < totalPages - 1) pages.push('...');
+  if (totalPages > 1) pages.push(totalPages);
+
+  const btn = (label, page, disabled = false, active = false) =>
+    `<button class="pag-btn${active ? ' active' : ''}${disabled ? ' disabled' : ''}"
+      ${disabled ? 'disabled' : `onclick="goToPage(${page})"`}>${label}</button>`;
+
+  pag.innerHTML =
+    btn('«', currentPage - 1, currentPage === 1) +
+    pages.map(p => p === '...'
+      ? '<span class="pag-ellipsis">…</span>'
+      : btn(p, p, false, p === currentPage)
+    ).join('') +
+    btn('»', currentPage + 1, currentPage === totalPages);
+}
+
+function goToPage(page) {
+  currentPage = page;
+  renderTable();
+  // Scroll suave al inicio de la tabla
+  document.querySelector('.table-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function sortTable(col) {
-  sortAsc  = sortCol === col ? !sortAsc : true;
-  sortCol  = col;
+  sortAsc = sortCol === col ? !sortAsc : true;
+  sortCol = col;
   applyFilters();
 }
 
