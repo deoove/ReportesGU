@@ -4,197 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro General - Reportes GU</title>
+  <link rel="stylesheet" href="static/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #2d3748; }
-
-    header {
-      background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%);
-      color: white; padding: 20px 30px;
-      display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 12px;
-    }
-    header h1 { font-size: 1.5rem; font-weight: 700; }
-    header p  { font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }
-    .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-    .btn-header {
-      display: flex; align-items: center; gap: 8px;
-      border-radius: 8px; padding: 9px 18px;
-      cursor: pointer; font-size: 0.88rem; font-weight: 600;
-      transition: background 0.2s; white-space: nowrap; border: none;
-    }
-    .btn-upload { background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.5); color: white; }
-    .btn-upload:hover { background: rgba(255,255,255,0.3); }
-
-    .container { padding: 24px 20px; max-width: 1800px; margin: 0 auto; }
-
-    .stats-bar { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-    .stat-card {
-      background: white; border-radius: 10px; padding: 14px 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      min-width: 140px; text-align: center; border-top: 3px solid #2b6cb0;
-    }
-    .stat-card .val { font-size: 1.8rem; font-weight: 700; color: #2b6cb0; }
-    .stat-card .lbl { font-size: 0.75rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
-
-    .toolbar {
-      background: white; border-radius: 10px; padding: 16px 20px;
-      margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
-    }
-    .toolbar input, .toolbar select {
-      border: 1px solid #e2e8f0; border-radius: 6px;
-      padding: 8px 12px; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
-    }
-    .toolbar input:focus, .toolbar select:focus { border-color: #2b6cb0; }
-    .toolbar input[type=text] { min-width: 220px; }
-    .toolbar label { font-size: 0.85rem; color: #4a5568; white-space: nowrap; }
-    .count-label { font-size: 0.85rem; color: #718096; margin-left: auto; }
-
-    .table-wrap {
-      background: white; border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: auto;
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    thead tr { background: #2b6cb0; color: white; }
-    thead th {
-      padding: 11px 14px; text-align: left; white-space: nowrap;
-      font-weight: 600; letter-spacing: 0.03em; cursor: pointer; user-select: none;
-      position: sticky; top: 0;
-    }
-    thead th:hover { background: #2c5282; }
-    thead th .sort-icon { margin-left: 4px; opacity: 0.6; font-size: 0.7em; }
-    tbody tr { border-bottom: 1px solid #edf2f7; transition: background 0.15s; }
-    tbody tr:hover { background: #ebf4ff; }
-    tbody td { padding: 9px 14px; white-space: nowrap; }
-    tbody tr:nth-child(even) { background: #f7fafc; }
-    tbody tr:nth-child(even):hover { background: #ebf4ff; }
-    tr.new-row td:first-child { border-left: 3px solid #48bb78; }
-
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-    .badge-bueno    { background: #c6f6d5; color: #276749; }
-    .badge-malo     { background: #fed7d7; color: #9b2c2c; }
-    .badge-normal   { background: #bee3f8; color: #2c5282; }
-    .badge-pendiente{ background: #fefcbf; color: #744210; }
-
-    /* Botones de acción en tabla */
-    .btn-accion {
-      border: none; border-radius: 5px; padding: 4px 10px;
-      cursor: pointer; font-size: 0.76rem; font-weight: 600; margin-right: 4px;
-    }
-    .btn-ver    { background: #2b6cb0; color: white; }
-    .btn-editar { background: #d69e2e; color: white; }
-    .btn-borrar { background: #e53e3e; color: white; }
-
-    /* Modales base */
-    .modal { display: none; position: fixed; inset: 0; z-index: 300; align-items: center; justify-content: center; padding: 20px; }
-    .modal.open { display: flex; }
-    .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
-    .modal-box {
-      position: relative; background: white; border-radius: 14px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
-      width: 100%; max-width: 620px; max-height: 88vh;
-      display: flex; flex-direction: column; overflow: hidden;
-      animation: modalIn 0.2s ease-out;
-    }
-    .modal-box.wide { max-width: 780px; }
-    @keyframes modalIn {
-      from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .modal-header {
-      color: white; padding: 18px 24px;
-      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-    }
-    .modal-header.blue  { background: linear-gradient(135deg, #1a365d, #2b6cb0); }
-    .modal-header.warn  { background: linear-gradient(135deg, #744210, #c05621); }
-    .modal-header.green { background: linear-gradient(135deg, #1c4532, #276749); }
-    .modal-header.red   { background: linear-gradient(135deg, #63171b, #c53030); }
-    .modal-header h2 { font-size: 1.05rem; }
-    .modal-close {
-      background: rgba(255,255,255,0.2); border: none; color: white;
-      width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
-      font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
-      margin-left: auto;
-    }
-    .modal-close:hover { background: rgba(255,255,255,0.35); }
-    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
-    .modal-footer {
-      padding: 14px 24px; border-top: 1px solid #e2e8f0;
-      display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
-    }
-
-    /* Detalle */
-    .detail-section { margin-bottom: 20px; }
-    .detail-section h3 {
-      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
-      color: #718096; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0;
-    }
-    .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
-    .detail-row .lbl { font-size: 0.8rem; color: #718096; flex-shrink: 0; }
-    .detail-row .val { font-size: 0.85rem; font-weight: 500; text-align: right; color: #2d3748; }
-
-    /* Formulario edición */
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
-    .form-group label { font-size: 0.78rem; color: #718096; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-    .form-group input, .form-group select {
-      border: 1px solid #e2e8f0; border-radius: 6px;
-      padding: 7px 10px; font-size: 0.88rem; outline: none; transition: border-color 0.2s;
-    }
-    .form-group input:focus { border-color: #2b6cb0; }
-    .form-group.full { grid-column: 1 / -1; }
-
-    /* Tabla duplicados */
-    .dup-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 14px; }
-    .dup-table th { background: #fff3cd; color: #744210; padding: 8px 12px; text-align: left; }
-    .dup-table td { padding: 7px 12px; border-bottom: 1px solid #fef3c7; }
-    .dup-table input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #c05621; }
-    .check-all-row { display: flex; align-items: center; gap: 8px; font-size: 0.83rem; color: #744210; margin-bottom: 10px; cursor: pointer; }
-
-    /* Botones generales */
-    .btn { border: none; border-radius: 7px; padding: 9px 20px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-    .btn:hover { opacity: 0.88; }
-    .btn-cancel  { background: #e2e8f0; color: #4a5568; }
-    .btn-skip    { background: #ebf4ff; color: #2b6cb0; border: 1.5px solid #bee3f8; }
-    .btn-confirm { background: #c05621; color: white; }
-    .btn-save    { background: #2b6cb0; color: white; }
-    .btn-delete  { background: #e53e3e; color: white; }
-
-    /* Toast */
-    .toast {
-      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-      background: #2d3748; color: white; border-radius: 8px;
-      padding: 12px 22px; font-size: 0.88rem; font-weight: 500;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.25); z-index: 400;
-      opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
-    }
-    .toast.show    { opacity: 1; }
-    .toast.success { background: #276749; }
-    .toast.warn    { background: #744210; }
-    .toast.error   { background: #9b2c2c; }
-
-    /* Loading */
-    .loading-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(255,255,255,0.75); z-index: 500;
-      align-items: center; justify-content: center; flex-direction: column; gap: 14px;
-    }
-    .loading-overlay.show { display: flex; }
-    .spinner {
-      width: 40px; height: 40px; border: 4px solid #e2e8f0;
-      border-top-color: #2b6cb0; border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .no-results { padding: 40px; text-align: center; color: #a0aec0; font-size: 0.95rem; }
-  </style>
 </head>
 <body>
 
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
 <header>
   <div>
     <h1>Registro General de ODS</h1>
@@ -202,23 +17,33 @@
   </div>
   <div class="header-actions">
     <button class="btn-header btn-upload" onclick="document.getElementById('fileInput').click()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+        <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+      </svg>
       Subir Excel
     </button>
     <input type="file" id="fileInput" accept=".xls,.xlsx" style="display:none" onchange="handleFile(event)">
   </div>
 </header>
 
+<!-- ── Contenido principal ─────────────────────────────────────────────────── -->
 <div class="container">
+
+  <!-- Estadísticas -->
   <div class="stats-bar" id="statsBar"></div>
 
+  <!-- Filtros -->
   <div class="toolbar">
     <label>Buscar:</label>
     <input type="text" id="searchInput" placeholder="ODS, inspector, N° serie, distrito...">
     <label>Distrito:</label>
-    <select id="filterDistrito"><option value="">Todos</option></select>
+    <select id="filterDistrito">
+      <option value="">Todos</option>
+    </select>
     <label>Inspector:</label>
-    <select id="filterInspector"><option value="">Todos</option></select>
+    <select id="filterInspector">
+      <option value="">Todos</option>
+    </select>
     <label>Estado:</label>
     <select id="filterEstado">
       <option value="">Todos</option>
@@ -228,6 +53,7 @@
     <span class="count-label" id="countLabel"></span>
   </div>
 
+  <!-- Tabla -->
   <div class="table-wrap">
     <table>
       <thead>
@@ -251,15 +77,16 @@
     </table>
     <div class="no-results" id="noResults" style="display:none">No se encontraron resultados.</div>
   </div>
+
 </div>
 
-<!-- Loading -->
+<!-- ── Loading ─────────────────────────────────────────────────────────────── -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
-  <span style="color:#4a5568;font-size:0.9rem" id="loadingMsg">Cargando...</span>
+  <span id="loadingMsg">Cargando...</span>
 </div>
 
-<!-- Modal: Detalle -->
+<!-- ── Modal: Detalle ──────────────────────────────────────────────────────── -->
 <div class="modal" id="modalDetalle">
   <div class="modal-backdrop" onclick="closeModal('modalDetalle')"></div>
   <div class="modal-box wide">
@@ -271,7 +98,7 @@
   </div>
 </div>
 
-<!-- Modal: Editar -->
+<!-- ── Modal: Editar ───────────────────────────────────────────────────────── -->
 <div class="modal" id="modalEditar">
   <div class="modal-backdrop" onclick="closeModal('modalEditar')"></div>
   <div class="modal-box wide">
@@ -286,12 +113,12 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-cancel" onclick="closeModal('modalEditar')">Cancelar</button>
-      <button class="btn btn-save" onclick="guardarEdicion(event)">Guardar cambios</button>
+      <button class="btn btn-save"   onclick="guardarEdicion(event)">Guardar cambios</button>
     </div>
   </div>
 </div>
 
-<!-- Modal: Confirmar eliminación -->
+<!-- ── Modal: Confirmar eliminación ────────────────────────────────────────── -->
 <div class="modal" id="modalBorrar">
   <div class="modal-backdrop" onclick="closeModal('modalBorrar')"></div>
   <div class="modal-box" style="max-width:420px">
@@ -300,7 +127,10 @@
       <button class="modal-close" onclick="closeModal('modalBorrar')">✕</button>
     </div>
     <div class="modal-body">
-      <p style="color:#4a5568;font-size:0.95rem">¿Estás seguro que querés eliminar la ODS <strong id="borrarOds"></strong>? Esta acción no se puede deshacer.</p>
+      <p style="color:#4a5568;font-size:0.95rem">
+        ¿Estás seguro que querés eliminar la ODS <strong id="borrarOds"></strong>?
+        Esta acción no se puede deshacer.
+      </p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-cancel" onclick="closeModal('modalBorrar')">Cancelar</button>
@@ -309,7 +139,7 @@
   </div>
 </div>
 
-<!-- Modal: Duplicados -->
+<!-- ── Modal: Duplicados ────────────────────────────────────────────────────── -->
 <div class="modal" id="modalDups">
   <div class="modal-backdrop" onclick="cancelImport()"></div>
   <div class="modal-box wide">
@@ -320,450 +150,36 @@
     <div class="modal-body">
       <p id="dupDesc" style="color:#4a5568;font-size:0.9rem;margin-bottom:14px"></p>
       <label class="check-all-row">
-        <input type="checkbox" id="checkAll" onchange="toggleAll(this)"> Seleccionar / deseleccionar todas
+        <input type="checkbox" id="checkAll" onchange="toggleAll(this)">
+        Seleccionar / deseleccionar todas
       </label>
       <table class="dup-table">
         <thead>
           <tr>
-            <th>Pisar</th><th>ODS</th>
-            <th>Inspector actual</th><th>Inspector nuevo</th>
-            <th>F. Gen. actual</th><th>F. Gen. nueva</th>
+            <th>Pisar</th>
+            <th>ODS</th>
+            <th>Inspector actual</th>
+            <th>Inspector nuevo</th>
+            <th>F. Gen. actual</th>
+            <th>F. Gen. nueva</th>
           </tr>
         </thead>
         <tbody id="dupTableBody"></tbody>
       </table>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-cancel" onclick="cancelImport()">Cancelar</button>
-      <button class="btn btn-skip" onclick="confirmImport(false)">Ignorar duplicadas, agregar nuevas</button>
+      <button class="btn btn-cancel"  onclick="cancelImport()">Cancelar</button>
+      <button class="btn btn-skip"    onclick="confirmImport(false)">Ignorar duplicadas, agregar nuevas</button>
       <button class="btn btn-confirm" onclick="confirmImport(true)">Confirmar selección</button>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
+<!-- ── Toast ────────────────────────────────────────────────────────────────── -->
 <div class="toast" id="toast"></div>
 
-<script>
-// ── Config ────────────────────────────────────────────────────────────────────
-// Si la página se abre desde el servidor (http://), usa la API.
-// Si se abre con doble clic (file://), avisa al usuario.
-const API = window.location.protocol === 'file:'
-  ? null
-  : `${window.location.protocol}//${window.location.host}/api`;
+<!-- ── Scripts ──────────────────────────────────────────────────────────────── -->
+<script src="static/app.js"></script>
 
-// ── Estado global ─────────────────────────────────────────────────────────────
-let DATA = [];
-let newOdsSet = new Set();
-let sortCol = 'ods', sortAsc = true;
-let filtered = [];
-let pendingNew = [], pendingDups = [];
-let odsBorrarActual = null;
-let odsEditarActual = null;
-
-const CAMPOS = [
-  'ods','ubicacion_tecnica','fecha_generacion','fecha_entrega','fecha_inspeccion',
-  'hora_llegada','hora_salida','inspector','distrito','exp_ref','nro_serie',
-  'material','lectura','funcionamiento','resid','actividad','estado_conexion',
-  'tipo_caja','movil','precinto','pozo','valvula_retencion','cx_libres',
-  'corte','observaciones','resuelve','motivo','alto_consumo',
-  'ods_inconsistencia_rcc','zrec','ods_recambio','fecha_comunicacion','nro_contacto'
-];
-
-const LABELS = {
-  ods:'ODS', ubicacion_tecnica:'Ubic. Técnica', fecha_generacion:'F. Generación',
-  fecha_entrega:'F. Entrega', fecha_inspeccion:'F. Inspección',
-  hora_llegada:'Hora Llegada', hora_salida:'Hora Salida',
-  inspector:'Inspector', distrito:'Distrito', exp_ref:'Exp. Ref.',
-  nro_serie:'N° Serie', material:'Material', lectura:'Lectura',
-  funcionamiento:'Funcionamiento', resid:'Resid/No Resid', actividad:'Actividad',
-  estado_conexion:'Estado Cx.', tipo_caja:'Tipo Caja', movil:'Móvil',
-  precinto:'Precinto', pozo:'Pozo', valvula_retencion:'Válvula Ret.',
-  cx_libres:'Cx. Libres', corte:'Corte', observaciones:'Observaciones',
-  resuelve:'Resuelve', motivo:'Motivo', alto_consumo:'Alto Consumo',
-  ods_inconsistencia_rcc:'ODS Inc. RCC', zrec:'ZREC',
-  ods_recambio:'ODS Recambio', fecha_comunicacion:'F. Comunicación',
-  nro_contacto:'N° Contacto'
-};
-
-// ── API helpers ───────────────────────────────────────────────────────────────
-async function apiFetch(path, opts = {}) {
-  if (!API) { showToast('Abrí la página desde el servidor: http://localhost:8000', 'error'); throw new Error('No API'); }
-  const res = await fetch(API + path, {
-    headers: {'Content-Type': 'application/json'},
-    ...opts
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-// ── Carga de datos ────────────────────────────────────────────────────────────
-async function loadData() {
-  if (!API) {
-    showToast('Usá el servidor local: doble clic en arrancar.bat y abrí http://localhost:8000', 'warn');
-    return;
-  }
-  try {
-    showLoading('Cargando registros...');
-    DATA = await apiFetch('/registros');
-  } catch(e) {
-    showToast('No se pudo conectar al servidor.', 'error');
-    DATA = [];
-  } finally {
-    hideLoading();
-  }
-}
-
-// ── Parseo Excel ──────────────────────────────────────────────────────────────
-const COLS_XLS = [
-  'ods','ubicacion_tecnica','sem','bim','anio','fecha_generacion','rcc',
-  'primera_lect','aud','consumo_cero','integral','distrito','analisis','repite',
-  'fecha_entrega','inspector','exp_ref','nro_serie','material','lectura',
-  'fecha_inspeccion','hora_llegada','hora_salida','funcionamiento','resid',
-  'actividad','corte','precinto','pozo','valvula_retencion','estado_conexion',
-  'tipo_caja','movil','cx_libres','observaciones','resuelve','motivo',
-  'ods_inconsistencia_rcc','zrec','ods_recambio','alto_consumo',
-  'fecha_comunicacion','nro_contacto'
-];
-
-function xlsxDate(val) {
-  if (val == null || val === '') return '';
-  if (typeof val === 'number' && val > 1000) {
-    const d = XLSX.SSF.parse_date_code(val);
-    if (!d) return String(val);
-    return `${String(d.d).padStart(2,'0')}/${String(d.m).padStart(2,'0')}/${d.y}`;
-  }
-  const s = String(val).trim();
-  const m = s.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{2,4})$/);
-  if (m) return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;
-  return s;
-}
-
-function xlsxHora(val) {
-  if (val == null || val === '') return '';
-  if (typeof val === 'number' && val > 0 && val < 1) {
-    const t = Math.round(val * 24 * 60);
-    return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
-  }
-  return String(val).trim();
-}
-
-function cleanNum(val) {
-  if (val == null || val === '') return '';
-  if (typeof val === 'number') return val === Math.floor(val) ? String(Math.floor(val)) : String(val);
-  return String(val).trim();
-}
-
-function parseXlsRow(raw) {
-  const r = {};
-  COLS_XLS.forEach((col, i) => {
-    const v = raw[i];
-    if ([5,14,20,41].includes(i))  r[col] = xlsxDate(v);
-    else if ([21,22].includes(i))  r[col] = xlsxHora(v);
-    else                           r[col] = cleanNum(v);
-  });
-  return r;
-}
-
-function handleFile(event) {
-  const file = event.target.files[0];
-  event.target.value = '';
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const wb = XLSX.read(e.target.result, {type: 'array'});
-      const sheet = wb.Sheets['REGISTRO_GENERAL'];
-      if (!sheet) { showToast('No se encontró la hoja REGISTRO_GENERAL.', 'error'); return; }
-      const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true});
-      const incoming = rows.slice(1).filter(r => r.length > 0 && r[0]).map(parseXlsRow);
-      if (!incoming.length) { showToast('El archivo no tiene datos.', 'warn'); return; }
-
-      const existingMap = {};
-      DATA.forEach(d => { existingMap[d.ods] = d; });
-      pendingNew  = incoming.filter(r => !existingMap[r.ods]);
-      pendingDups = incoming.filter(r =>  existingMap[r.ods]).map(r => ({newRow:r, oldRow:existingMap[r.ods]}));
-
-      if (!pendingDups.length) applyImport(pendingNew, []);
-      else openDupModal(pendingDups, pendingNew);
-    } catch(err) {
-      showToast('Error al leer el archivo: ' + err.message, 'error');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-// ── Modal duplicados ──────────────────────────────────────────────────────────
-function openDupModal(dups, news) {
-  document.getElementById('dupDesc').textContent =
-    `Se encontraron ${dups.length} ODS ya existentes y ${news.length} nuevas. Marcá las que querés pisar:`;
-  document.getElementById('checkAll').checked = false;
-  document.getElementById('dupTableBody').innerHTML = dups.map((d,i) => `
-    <tr>
-      <td style="text-align:center"><input type="checkbox" class="dup-cb" data-idx="${i}"></td>
-      <td><strong>${d.newRow.ods}</strong></td>
-      <td>${d.oldRow.inspector||'—'}</td><td>${d.newRow.inspector||'—'}</td>
-      <td>${d.oldRow.fecha_generacion||'—'}</td><td>${d.newRow.fecha_generacion||'—'}</td>
-    </tr>`).join('');
-  openModal('modalDups');
-}
-
-function toggleAll(cb) {
-  document.querySelectorAll('.dup-cb').forEach(c => c.checked = cb.checked);
-}
-
-function cancelImport() {
-  closeModal('modalDups');
-  pendingNew = []; pendingDups = [];
-  showToast('Importación cancelada.', 'warn');
-}
-
-function confirmImport(useCheckboxes) {
-  let overwriteOds = [];
-  if (useCheckboxes) {
-    document.querySelectorAll('.dup-cb:checked').forEach(cb => {
-      overwriteOds.push(pendingDups[parseInt(cb.dataset.idx)].newRow.ods);
-    });
-  }
-  closeModal('modalDups');
-  applyImport([...pendingNew, ...pendingDups.map(d=>d.newRow)], overwriteOds);
-  pendingNew = []; pendingDups = [];
-}
-
-async function applyImport(rows, overwriteOds) {
-  try {
-    showLoading('Guardando en la base de datos...');
-    const result = await apiFetch('/registros', {
-      method: 'POST',
-      body: JSON.stringify({ rows, overwrite: overwriteOds })
-    });
-    await loadData();
-    rebuildFilters();
-    applyFilters();
-    const msg = [];
-    if (result.agregados)    msg.push(`${result.agregados} ODS agregadas`);
-    if (result.actualizados) msg.push(`${result.actualizados} ODS actualizadas`);
-    showToast(msg.join(' · ') || 'Sin cambios.', 'success');
-
-    // Marcar nuevas en verde
-    const nuevasOds = rows.filter(r => !overwriteOds.includes(r.ods)).map(r => r.ods);
-    DATA.forEach(d => { if (nuevasOds.includes(d.ods)) newOdsSet.add(d.ods); });
-    renderTable();
-    setTimeout(() => { newOdsSet.clear(); renderTable(); }, 8000);
-  } catch(e) {
-    showToast('Error al guardar: ' + e.message, 'error');
-  } finally {
-    hideLoading();
-  }
-}
-
-// ── Detalle ───────────────────────────────────────────────────────────────────
-function verDetalle(ods) {
-  const d = DATA.find(x => x.ods === ods);
-  if (!d) return;
-  document.getElementById('detalleTitulo').textContent = `ODS ${d.ods}`;
-  const sections = [
-    { title: 'Identificación', fields: ['ods','ubicacion_tecnica','exp_ref','nro_serie','material','distrito'] },
-    { title: 'Fechas', fields: ['fecha_generacion','fecha_entrega','fecha_inspeccion','hora_llegada','hora_salida','fecha_comunicacion'] },
-    { title: 'Inspección', fields: ['inspector','lectura','funcionamiento','estado_conexion','tipo_caja','movil','resid','actividad'] },
-    { title: 'Condiciones', fields: ['precinto','pozo','valvula_retencion','cx_libres','corte'] },
-    { title: 'Gestión', fields: ['resuelve','motivo','zrec','ods_recambio','alto_consumo','nro_contacto','observaciones'] },
-  ];
-  document.getElementById('detalleBody').innerHTML = sections.map(s => `
-    <div class="detail-section">
-      <h3>${s.title}</h3>
-      ${s.fields.filter(f => d[f]).map(f => `
-        <div class="detail-row">
-          <span class="lbl">${LABELS[f]||f}</span>
-          <span class="val">${d[f]}</span>
-        </div>`).join('') || '<div style="color:#a0aec0;font-size:0.82rem">Sin datos</div>'}
-    </div>`).join('');
-  openModal('modalDetalle');
-}
-
-// ── Editar ────────────────────────────────────────────────────────────────────
-function verEditar(ods) {
-  const d = DATA.find(x => x.ods === ods);
-  if (!d) return;
-  odsEditarActual = ods;
-  document.getElementById('editarTitulo').textContent = `Editar ODS ${ods}`;
-  document.getElementById('formGrid').innerHTML = CAMPOS.map(c => `
-    <div class="form-group${c==='observaciones'||c==='motivo' ? ' full' : ''}">
-      <label>${LABELS[c]||c}</label>
-      <input type="text" name="${c}" value="${(d[c]||'').replace(/"/g,'&quot;')}"
-        ${c==='ods' ? 'readonly style="background:#f7fafc;color:#718096"' : ''}>
-    </div>`).join('');
-  openModal('modalEditar');
-}
-
-async function guardarEdicion(e) {
-  e.preventDefault();
-  const form = document.getElementById('formEditar');
-  const data = {};
-  CAMPOS.forEach(c => { data[c] = form.elements[c]?.value || ''; });
-  try {
-    showLoading('Guardando...');
-    await apiFetch(`/registros/${encodeURIComponent(odsEditarActual)}`, {
-      method: 'PUT', body: JSON.stringify(data)
-    });
-    closeModal('modalEditar');
-    await loadData();
-    rebuildFilters();
-    applyFilters();
-    showToast('Registro actualizado correctamente.', 'success');
-  } catch(err) {
-    showToast('Error al guardar: ' + err.message, 'error');
-  } finally {
-    hideLoading();
-  }
-}
-
-// ── Eliminar ──────────────────────────────────────────────────────────────────
-function verBorrar(ods) {
-  odsBorrarActual = ods;
-  document.getElementById('borrarOds').textContent = ods;
-  openModal('modalBorrar');
-}
-
-async function confirmarBorrar() {
-  try {
-    showLoading('Eliminando...');
-    await apiFetch(`/registros/${encodeURIComponent(odsBorrarActual)}`, {method: 'DELETE'});
-    closeModal('modalBorrar');
-    await loadData();
-    rebuildFilters();
-    applyFilters();
-    showToast('Registro eliminado.', 'success');
-  } catch(err) {
-    showToast('Error al eliminar: ' + err.message, 'error');
-  } finally {
-    hideLoading();
-  }
-}
-
-// ── Render ────────────────────────────────────────────────────────────────────
-function badgeEstado(val) {
-  if (!val) return '<span style="color:#a0aec0">—</span>';
-  const cls = val==='Bueno'?'badge-bueno':val==='Malo'?'badge-malo':val==='Normal'?'badge-normal':'badge-pendiente';
-  return `<span class="badge ${cls}">${val}</span>`;
-}
-
-function buildStats() {
-  const total = DATA.length;
-  const conInspector  = DATA.filter(d => d.inspector).length;
-  const conInspeccion = DATA.filter(d => d.fecha_inspeccion).length;
-  const buenos  = DATA.filter(d => d.estado_conexion === 'Bueno').length;
-  const malos   = DATA.filter(d => d.estado_conexion === 'Malo').length;
-  const distritos = new Set(DATA.map(d => d.distrito).filter(Boolean)).size;
-  document.getElementById('statsBar').innerHTML = [
-    {val:total,lbl:'Total ODS'},{val:conInspector,lbl:'Con Inspector'},
-    {val:conInspeccion,lbl:'Inspeccionados'},{val:buenos,lbl:'Estado Bueno'},
-    {val:malos,lbl:'Estado Malo'},{val:distritos,lbl:'Distritos'},
-  ].map(s=>`<div class="stat-card"><div class="val">${s.val}</div><div class="lbl">${s.lbl}</div></div>`).join('');
-}
-
-function rebuildFilters() {
-  buildStats();
-  const dSel = document.getElementById('filterDistrito');
-  const iSel = document.getElementById('filterInspector');
-  const dVal = dSel.value, iVal = iSel.value;
-  dSel.innerHTML = '<option value="">Todos</option>';
-  [...new Set(DATA.map(d=>d.distrito).filter(Boolean))].sort((a,b)=>a-b)
-    .forEach(d=>dSel.innerHTML+=`<option value="${d}">${d}</option>`);
-  iSel.innerHTML = '<option value="">Todos</option>';
-  [...new Set(DATA.map(d=>d.inspector).filter(Boolean))].sort()
-    .forEach(i=>iSel.innerHTML+=`<option value="${i}">${i}</option>`);
-  dSel.value=dVal; iSel.value=iVal;
-}
-
-function applyFilters() {
-  const q    = document.getElementById('searchInput').value.toLowerCase();
-  const dist = document.getElementById('filterDistrito').value;
-  const insp = document.getElementById('filterInspector').value;
-  const est  = document.getElementById('filterEstado').value;
-  filtered = DATA.filter(d => {
-    const s = [d.ods,d.inspector,d.nro_serie,d.distrito,d.material,d.movil,d.exp_ref].join(' ').toLowerCase();
-    return (!q||s.includes(q)) && (!dist||d.distrito===dist) &&
-           (!insp||d.inspector===insp) && (!est||d.estado_conexion===est);
-  });
-  filtered.sort((a,b) => {
-    let va=a[sortCol]||'', vb=b[sortCol]||'';
-    if(!isNaN(va)&&!isNaN(vb)){va=parseFloat(va)||0;vb=parseFloat(vb)||0;}
-    return va<vb?(sortAsc?-1:1):va>vb?(sortAsc?1:-1):0;
-  });
-  renderTable();
-}
-
-function renderTable() {
-  const tbody = document.getElementById('tableBody');
-  document.getElementById('countLabel').textContent = `${filtered.length} de ${DATA.length} registros`;
-  if (!filtered.length) {
-    tbody.innerHTML = '';
-    document.getElementById('noResults').style.display = 'block';
-    return;
-  }
-  document.getElementById('noResults').style.display = 'none';
-  tbody.innerHTML = filtered.map(d => `
-    <tr class="${newOdsSet.has(d.ods)?'new-row':''}">
-      <td><strong>${d.ods}</strong>${newOdsSet.has(d.ods)?' <span style="color:#276749;font-size:0.72rem;font-weight:700">NUEVO</span>':''}</td>
-      <td>${d.fecha_generacion||'—'}</td>
-      <td>${d.fecha_entrega||'—'}</td>
-      <td>${d.fecha_inspeccion||'—'}</td>
-      <td>${d.inspector||'<span style="color:#a0aec0">Sin asignar</span>'}</td>
-      <td><span class="badge badge-pendiente">${d.distrito||'—'}</span></td>
-      <td>${d.nro_serie||'—'}</td>
-      <td>${d.material||'—'}</td>
-      <td>${d.lectura||'—'}</td>
-      <td>${badgeEstado(d.funcionamiento)}</td>
-      <td>${badgeEstado(d.estado_conexion)}</td>
-      <td>${d.resid?d.resid.trim():'—'}</td>
-      <td>
-        <button class="btn-accion btn-ver"    onclick="verDetalle('${d.ods}')">Ver</button>
-        <button class="btn-accion btn-editar" onclick="verEditar('${d.ods}')">Editar</button>
-        <button class="btn-accion btn-borrar" onclick="verBorrar('${d.ods}')">Borrar</button>
-      </td>
-    </tr>`).join('');
-}
-
-function sortTable(col) {
-  sortAsc = sortCol===col ? !sortAsc : true;
-  sortCol = col; applyFilters();
-}
-
-// ── Modal helpers ─────────────────────────────────────────────────────────────
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') ['modalDetalle','modalEditar','modalBorrar','modalDups'].forEach(closeModal);
-});
-
-// ── Loading ───────────────────────────────────────────────────────────────────
-function showLoading(msg='Cargando...') {
-  document.getElementById('loadingMsg').textContent = msg;
-  document.getElementById('loadingOverlay').classList.add('show');
-}
-function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.className='toast', 4000);
-}
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-document.getElementById('searchInput').addEventListener('input', applyFilters);
-document.getElementById('filterDistrito').addEventListener('change', applyFilters);
-document.getElementById('filterInspector').addEventListener('change', applyFilters);
-document.getElementById('filterEstado').addEventListener('change', applyFilters);
-
-(async function() {
-  await loadData();
-  rebuildFilters();
-  applyFilters();
-})();
-</script>
 </body>
 </html>
