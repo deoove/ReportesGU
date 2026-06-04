@@ -4,204 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro General - Reportes GU</title>
+  <link rel="stylesheet" href="static/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #2d3748; }
-
-    header {
-      background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%);
-      color: white; padding: 20px 30px;
-      display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 12px;
-    }
-    header h1 { font-size: 1.5rem; font-weight: 700; }
-    header p { font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }
-
-    .btn-upload {
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.5);
-      color: white; border-radius: 8px; padding: 9px 18px;
-      cursor: pointer; font-size: 0.9rem; font-weight: 600;
-      transition: background 0.2s; white-space: nowrap;
-    }
-    .btn-upload:hover { background: rgba(255,255,255,0.3); }
-    .btn-upload svg { width: 18px; height: 18px; fill: white; }
-
-    .container { padding: 24px 20px; max-width: 1800px; margin: 0 auto; }
-
-    .stats-bar { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-    .stat-card {
-      background: white; border-radius: 10px; padding: 14px 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      min-width: 140px; text-align: center; border-top: 3px solid #2b6cb0;
-    }
-    .stat-card .val { font-size: 1.8rem; font-weight: 700; color: #2b6cb0; }
-    .stat-card .lbl { font-size: 0.75rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
-
-    .toolbar {
-      background: white; border-radius: 10px; padding: 16px 20px;
-      margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
-    }
-    .toolbar input, .toolbar select {
-      border: 1px solid #e2e8f0; border-radius: 6px;
-      padding: 8px 12px; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
-    }
-    .toolbar input:focus, .toolbar select:focus { border-color: #2b6cb0; }
-    .toolbar input { min-width: 220px; }
-    .toolbar label { font-size: 0.85rem; color: #4a5568; white-space: nowrap; }
-    .count-label { font-size: 0.85rem; color: #718096; margin-left: auto; }
-
-    .table-wrap {
-      background: white; border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: auto;
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    thead tr { background: #2b6cb0; color: white; }
-    thead th {
-      padding: 11px 14px; text-align: left; white-space: nowrap;
-      font-weight: 600; letter-spacing: 0.03em; cursor: pointer; user-select: none;
-      position: sticky; top: 0;
-    }
-    thead th:hover { background: #2c5282; }
-    thead th .sort-icon { margin-left: 4px; opacity: 0.6; font-size: 0.7em; }
-    tbody tr { border-bottom: 1px solid #edf2f7; transition: background 0.15s; }
-    tbody tr:hover { background: #ebf4ff; }
-    tbody td { padding: 9px 14px; white-space: nowrap; }
-    tbody tr:nth-child(even) { background: #f7fafc; }
-    tbody tr:nth-child(even):hover { background: #ebf4ff; }
-    tr.new-row td:first-child { border-left: 3px solid #48bb78; }
-
-    .badge {
-      display: inline-block; padding: 2px 8px; border-radius: 12px;
-      font-size: 0.75rem; font-weight: 600;
-    }
-    .badge-bueno   { background: #c6f6d5; color: #276749; }
-    .badge-malo    { background: #fed7d7; color: #9b2c2c; }
-    .badge-normal  { background: #bee3f8; color: #2c5282; }
-    .badge-pendiente { background: #fefcbf; color: #744210; }
-
-    /* Detail modal */
-    .detail-panel {
-      display: none; position: fixed; inset: 0; z-index: 200;
-      align-items: center; justify-content: center; padding: 20px;
-    }
-    .detail-panel.open { display: flex; }
-    .detail-box {
-      position: relative; background: white; border-radius: 14px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
-      width: 100%; max-width: 560px; max-height: 85vh;
-      display: flex; flex-direction: column; overflow: hidden;
-      animation: modalIn 0.2s ease-out;
-    }
-    @keyframes modalIn {
-      from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .detail-header {
-      background: linear-gradient(135deg, #1a365d, #2b6cb0);
-      color: white; padding: 20px 24px;
-      display: flex; justify-content: space-between; align-items: center;
-      flex-shrink: 0;
-    }
-    .detail-header h2 { font-size: 1.1rem; }
-    .detail-close {
-      background: rgba(255,255,255,0.2); border: none; color: white;
-      width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
-      font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
-    }
-    .detail-close:hover { background: rgba(255,255,255,0.35); }
-    .detail-body { padding: 20px 24px; overflow-y: auto; }
-    .detail-section { margin-bottom: 20px; }
-    .detail-section h3 {
-      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
-      color: #718096; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0;
-    }
-    .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
-    .detail-row .lbl { font-size: 0.8rem; color: #718096; flex-shrink: 0; }
-    .detail-row .val { font-size: 0.85rem; font-weight: 500; text-align: right; color: #2d3748; }
-
-    /* Modal duplicados */
-    .modal {
-      display: none; position: fixed; inset: 0; z-index: 300;
-      align-items: center; justify-content: center;
-    }
-    .modal.open { display: flex; }
-    .modal-backdrop {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.5);
-    }
-    .modal-box {
-      position: relative; background: white; border-radius: 14px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
-      width: 90%; max-width: 620px; max-height: 80vh;
-      display: flex; flex-direction: column; overflow: hidden;
-    }
-    .modal-header {
-      background: linear-gradient(135deg, #744210, #c05621);
-      color: white; padding: 18px 24px;
-      display: flex; align-items: center; gap: 12px;
-    }
-    .modal-header svg { width: 24px; height: 24px; fill: white; flex-shrink: 0; }
-    .modal-header h2 { font-size: 1.05rem; }
-    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
-    .modal-body p { color: #4a5568; font-size: 0.9rem; margin-bottom: 16px; }
-    .dup-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 16px; }
-    .dup-table th { background: #fff3cd; color: #744210; padding: 8px 12px; text-align: left; }
-    .dup-table td { padding: 7px 12px; border-bottom: 1px solid #fef3c7; }
-    .dup-table tr:last-child td { border-bottom: none; }
-    .dup-table input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #c05621; }
-    .check-all-row { display: flex; align-items: center; gap: 8px; font-size: 0.83rem; color: #744210; margin-bottom: 10px; cursor: pointer; }
-    .modal-footer {
-      padding: 16px 24px; border-top: 1px solid #e2e8f0;
-      display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
-    }
-    .btn { border: none; border-radius: 7px; padding: 9px 20px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-    .btn:hover { opacity: 0.88; }
-    .btn-cancel  { background: #e2e8f0; color: #4a5568; }
-    .btn-skip    { background: #ebf4ff; color: #2b6cb0; border: 1.5px solid #bee3f8; }
-    .btn-confirm { background: #c05621; color: white; }
-
-    /* Toast */
-    .toast {
-      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-      background: #2d3748; color: white; border-radius: 8px;
-      padding: 12px 22px; font-size: 0.88rem; font-weight: 500;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.25); z-index: 400;
-      opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
-    }
-    .toast.show { opacity: 1; }
-    .toast.success { background: #276749; }
-    .toast.warn    { background: #744210; }
-    .toast.error   { background: #9b2c2c; }
-
-    .no-results { padding: 40px; text-align: center; color: #a0aec0; font-size: 0.95rem; }
-  </style>
 </head>
 <body>
 
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
 <header>
   <div>
     <h1>Registro General de ODS</h1>
     <p>Sistema de Gestión de Órdenes de Servicio</p>
   </div>
-  <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
-    <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
-    Subir Excel
-  </button>
-  <input type="file" id="fileInput" accept=".xls,.xlsx" style="display:none" onchange="handleFile(event)">
+  <div class="header-actions">
+    <button class="btn-header btn-upload" onclick="document.getElementById('fileInput').click()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+        <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+      </svg>
+      Subir Excel
+    </button>
+    <input type="file" id="fileInput" accept=".xls,.xlsx" style="display:none" onchange="handleFile(event)">
+  </div>
 </header>
 
+<!-- ── Contenido principal ─────────────────────────────────────────────────── -->
 <div class="container">
+
+  <!-- Estadísticas -->
   <div class="stats-bar" id="statsBar"></div>
 
+  <!-- Filtros -->
   <div class="toolbar">
     <label>Buscar:</label>
     <input type="text" id="searchInput" placeholder="ODS, inspector, N° serie, distrito...">
     <label>Distrito:</label>
-    <select id="filterDistrito"><option value="">Todos</option></select>
+    <select id="filterDistrito">
+      <option value="">Todos</option>
+    </select>
     <label>Inspector:</label>
-    <select id="filterInspector"><option value="">Todos</option></select>
+    <select id="filterInspector">
+      <option value="">Todos</option>
+    </select>
     <label>Estado:</label>
     <select id="filterEstado">
       <option value="">Todos</option>
@@ -211,8 +53,9 @@
     <span class="count-label" id="countLabel"></span>
   </div>
 
+  <!-- Tabla -->
   <div class="table-wrap">
-    <table id="mainTable">
+    <table>
       <thead>
         <tr>
           <th onclick="sortTable('ods')">ODS <span class="sort-icon">⇅</span></th>
@@ -227,39 +70,88 @@
           <th onclick="sortTable('funcionamiento')">Funcionamiento <span class="sort-icon">⇅</span></th>
           <th onclick="sortTable('estado_conexion')">Estado Cx. <span class="sort-icon">⇅</span></th>
           <th onclick="sortTable('resid')">Tipo <span class="sort-icon">⇅</span></th>
-          <th>Detalle</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody id="tableBody"></tbody>
     </table>
     <div class="no-results" id="noResults" style="display:none">No se encontraron resultados.</div>
   </div>
+
 </div>
 
-<!-- Modal detalle -->
-<div class="detail-panel" id="detailPanel">
-  <div class="modal-backdrop" onclick="closeDetail()"></div>
-  <div class="detail-box">
-    <div class="detail-header">
-      <h2 id="detailTitle">Detalle ODS</h2>
-      <button class="detail-close" onclick="closeDetail()">✕</button>
+<!-- ── Loading ─────────────────────────────────────────────────────────────── -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <span id="loadingMsg">Cargando...</span>
+</div>
+
+<!-- ── Modal: Detalle ──────────────────────────────────────────────────────── -->
+<div class="modal" id="modalDetalle">
+  <div class="modal-backdrop" onclick="closeModal('modalDetalle')"></div>
+  <div class="modal-box wide">
+    <div class="modal-header blue">
+      <h2 id="detalleTitulo">Detalle ODS</h2>
+      <button class="modal-close" onclick="closeModal('modalDetalle')">✕</button>
     </div>
-    <div class="detail-body" id="detailBody"></div>
+    <div class="modal-body" id="detalleBody"></div>
   </div>
 </div>
 
-<!-- Modal duplicados -->
-<div class="modal" id="dupModal">
-  <div class="modal-backdrop" onclick="cancelImport()"></div>
-  <div class="modal-box">
-    <div class="modal-header">
-      <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
-      <h2>ODS duplicadas detectadas</h2>
+<!-- ── Modal: Editar ───────────────────────────────────────────────────────── -->
+<div class="modal" id="modalEditar">
+  <div class="modal-backdrop" onclick="closeModal('modalEditar')"></div>
+  <div class="modal-box wide">
+    <div class="modal-header green">
+      <h2 id="editarTitulo">Editar ODS</h2>
+      <button class="modal-close" onclick="closeModal('modalEditar')">✕</button>
     </div>
     <div class="modal-body">
-      <p id="dupDesc"></p>
+      <form id="formEditar" onsubmit="guardarEdicion(event)">
+        <div class="form-grid" id="formGrid"></div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeModal('modalEditar')">Cancelar</button>
+      <button class="btn btn-save"   onclick="guardarEdicion(event)">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Confirmar eliminación ────────────────────────────────────────── -->
+<div class="modal" id="modalBorrar">
+  <div class="modal-backdrop" onclick="closeModal('modalBorrar')"></div>
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header red">
+      <h2>Eliminar ODS</h2>
+      <button class="modal-close" onclick="closeModal('modalBorrar')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#4a5568;font-size:0.95rem">
+        ¿Estás seguro que querés eliminar la ODS <strong id="borrarOds"></strong>?
+        Esta acción no se puede deshacer.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeModal('modalBorrar')">Cancelar</button>
+      <button class="btn btn-delete" onclick="confirmarBorrar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Duplicados ────────────────────────────────────────────────────── -->
+<div class="modal" id="modalDups">
+  <div class="modal-backdrop" onclick="cancelImport()"></div>
+  <div class="modal-box wide">
+    <div class="modal-header warn">
+      <h2>ODS duplicadas detectadas</h2>
+      <button class="modal-close" onclick="cancelImport()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="dupDesc" style="color:#4a5568;font-size:0.9rem;margin-bottom:14px"></p>
       <label class="check-all-row">
-        <input type="checkbox" id="checkAll" onchange="toggleAll(this)"> Seleccionar / deseleccionar todas
+        <input type="checkbox" id="checkAll" onchange="toggleAll(this)">
+        Seleccionar / deseleccionar todas
       </label>
       <table class="dup-table">
         <thead>
@@ -268,414 +160,26 @@
             <th>ODS</th>
             <th>Inspector actual</th>
             <th>Inspector nuevo</th>
-            <th>F. Generación actual</th>
-            <th>F. Generación nueva</th>
+            <th>F. Gen. actual</th>
+            <th>F. Gen. nueva</th>
           </tr>
         </thead>
         <tbody id="dupTableBody"></tbody>
       </table>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-cancel" onclick="cancelImport()">Cancelar</button>
-      <button class="btn btn-skip"   onclick="confirmImport(false)">Ignorar duplicadas y agregar nuevas</button>
+      <button class="btn btn-cancel"  onclick="cancelImport()">Cancelar</button>
+      <button class="btn btn-skip"    onclick="confirmImport(false)">Ignorar duplicadas, agregar nuevas</button>
       <button class="btn btn-confirm" onclick="confirmImport(true)">Confirmar selección</button>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
+<!-- ── Toast ────────────────────────────────────────────────────────────────── -->
 <div class="toast" id="toast"></div>
 
-<script>
-// ── Datos base embebidos ──────────────────────────────────────────────────────
-const BASE_DATA = [
-  {"id":1,"ods":"30139706","ubicacion_tecnica":"10743","sem":"","bim":"","anio":"","fecha_generacion":"20/04/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"6","analisis":"","repite":"","fecha_entrega":"","inspector":"MOYANO, GUSTAVO","exp_ref":"6005923","nro_serie":"A24082047","material":"KRONKE","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
-  {"id":2,"ods":"30170286","ubicacion_tecnica":"18021","sem":"","bim":"","anio":"","fecha_generacion":"21/04/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"101","analisis":"","repite":"","fecha_entrega":"","inspector":"","exp_ref":"101009394","nro_serie":"10OF099990","material":"WOLTEX","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
-  {"id":3,"ods":"30210073","ubicacion_tecnica":"31325","sem":"","bim":"","anio":"","fecha_generacion":"20/03/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"202","analisis":"","repite":"","fecha_entrega":"30/03/2026","inspector":"MELGAR, MATIAS","exp_ref":"202220997","nro_serie":"A20080286","material":"KRHONE","lectura":"7007","fecha_inspeccion":"20/05/2026","hora_llegada":"12:05","hora_salida":"12:10","funcionamiento":"Normal","resid":"No Residencial","actividad":"Media","corte":"","precinto":"Normal","pozo":"No","valvula_retencion":"","estado_conexion":"Bueno","tipo_caja":"OSN","movil":"af714qi","cx_libres":"No","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
-  {"id":4,"ods":"30292508","ubicacion_tecnica":"32863","sem":"","bim":"","anio":"","fecha_generacion":"22/06/2020","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"203","analisis":"","repite":"","fecha_entrega":"","inspector":"","exp_ref":"203353188","nro_serie":"A19085724","material":"KR - WFX","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
-  {"id":5,"ods":"30342286","ubicacion_tecnica":"32720","sem":"","bim":"","anio":"","fecha_generacion":"13/03/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"203","analisis":"","repite":"","fecha_entrega":"","inspector":"","exp_ref":"203321313","nro_serie":"A24082030","material":"KRHONE","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
-  {"id":6,"ods":"30372648","ubicacion_tecnica":"","sem":"","bim":"","anio":"","fecha_generacion":"15/09/2025","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"102","analisis":"","repite":"","fecha_entrega":"15/10/2025","inspector":"SUAREZ, MANUEL","exp_ref":"","nro_serie":"A24082051","material":"KROHNE","lectura":"6309","fecha_inspeccion":"20/10/2025","hora_llegada":"09:40","hora_salida":"10:00","funcionamiento":"Normal","resid":"No Residencial","actividad":"Media","corte":"","precinto":"","pozo":"No","valvula_retencion":"No","estado_conexion":"Malo","tipo_caja":"AASA","movil":"AF709AN","cx_libres":"No","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
-  {"id":7,"ods":"30423743","ubicacion_tecnica":"33302291","sem":"","bim":"","anio":"","fecha_generacion":"21/04/2026","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"101","analisis":"","repite":"","fecha_entrega":"28/04/2026","inspector":"MARTEL, EDUARDO","exp_ref":"101045649","nro_serie":"25101972","material":"AIMEI","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
-  {"id":8,"ods":"30453355","ubicacion_tecnica":"26836","sem":"","bim":"","anio":"","fecha_generacion":"15/10/2021","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"301","analisis":"","repite":"","fecha_entrega":"03/09/2025","inspector":"","exp_ref":"","nro_serie":"10OF099974","material":"ACT-WOLTEX","lectura":"","fecha_inspeccion":"","hora_llegada":"","hora_salida":"","funcionamiento":"","resid":"","actividad":"","corte":"","precinto":"","pozo":"","valvula_retencion":"","estado_conexion":"","tipo_caja":"","movil":"","cx_libres":"","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""},
-  {"id":9,"ods":"30496524","ubicacion_tecnica":"16213","sem":"","bim":"","anio":"","fecha_generacion":"10/01/2022","rcc":"","primera_lect":"X","aud":"","consumo_cero":"","integral":"","distrito":"103","analisis":"","repite":"","fecha_entrega":"22/04/2025","inspector":"GUTIERREZ, RUBEN","exp_ref":"","nro_serie":"2310009268","material":"AIMEI MD-AP","lectura":"56","fecha_inspeccion":"28/04/2025","hora_llegada":"","hora_salida":"","funcionamiento":"Normal","resid":"No Residencial","actividad":"Media","corte":"","precinto":"Normal","pozo":"No","valvula_retencion":"","estado_conexion":"Bueno","tipo_caja":"AASA","movil":"AG386FF","cx_libres":"No","observaciones":"","resuelve":"","motivo":"","ods_inconsistencia_rcc":"","zrec":"","ods_recambio":"","alto_consumo":"","fecha_comunicacion":"","nro_contacto":""}
-];
+<!-- ── Scripts ──────────────────────────────────────────────────────────────── -->
+<script src="static/app.js"></script>
 
-// ── Estado global ─────────────────────────────────────────────────────────────
-let DATA = [];
-let newOdsSet = new Set();   // IDs marcados como recién agregados
-let sortCol = 'ods', sortAsc = true;
-let filtered = [];
-
-// Estado temporal del import
-let pendingNew = [];
-let pendingDups = [];
-
-// ── LocalStorage ──────────────────────────────────────────────────────────────
-function loadData() {
-  try {
-    const saved = localStorage.getItem('reportesgu_data');
-    if (saved) {
-      DATA = JSON.parse(saved);
-      return;
-    }
-  } catch(e) {}
-  DATA = BASE_DATA.map(d => ({...d}));
-}
-
-function saveData() {
-  try { localStorage.setItem('reportesgu_data', JSON.stringify(DATA)); } catch(e) {}
-}
-
-// ── Parseo de Excel con SheetJS ───────────────────────────────────────────────
-const COLS = [
-  'ods','ubicacion_tecnica','sem','bim','anio','fecha_generacion','rcc',
-  'primera_lect','aud','consumo_cero','integral','distrito','analisis','repite',
-  'fecha_entrega','inspector','exp_ref','nro_serie','material','lectura',
-  'fecha_inspeccion','hora_llegada','hora_salida','funcionamiento','resid',
-  'actividad','corte','precinto','pozo','valvula_retencion','estado_conexion',
-  'tipo_caja','movil','cx_libres','observaciones','resuelve','motivo',
-  'ods_inconsistencia_rcc','zrec','ods_recambio','alto_consumo',
-  'fecha_comunicacion','nro_contacto'
-];
-
-function xlsxDate(val) {
-  if (val == null || val === '') return '';
-  if (typeof val === 'number' && val > 1000) {
-    const d = XLSX.SSF.parse_date_code(val);
-    if (!d) return String(val);
-    return `${String(d.d).padStart(2,'0')}/${String(d.m).padStart(2,'0')}/${d.y}`;
-  }
-  const s = String(val).trim();
-  // Normaliza texto dd.mm.yyyy o dd-mm-yyyy
-  const m = s.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{2,4})$/);
-  if (m) return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;
-  return s;
-}
-
-function xlsxHora(val) {
-  if (val == null || val === '') return '';
-  if (typeof val === 'number' && val > 0 && val < 1) {
-    const total = Math.round(val * 24 * 60);
-    return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
-  }
-  return String(val).trim();
-}
-
-function cleanNum(val) {
-  if (val == null || val === '') return '';
-  if (typeof val === 'number') return val === Math.floor(val) ? String(Math.floor(val)) : String(val);
-  return String(val).trim();
-}
-
-function parseRow(raw) {
-  const r = {};
-  COLS.forEach((col, i) => {
-    const v = raw[i];
-    if ([5,14,20,41].includes(i))      r[col] = xlsxDate(v);
-    else if ([21,22].includes(i))      r[col] = xlsxHora(v);
-    else                               r[col] = cleanNum(v);
-  });
-  // Asignar ID único
-  r.id = Date.now() + Math.random();
-  return r;
-}
-
-function handleFile(event) {
-  const file = event.target.files[0];
-  event.target.value = '';
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const wb = XLSX.read(e.target.result, {type: 'array'});
-      const sheet = wb.Sheets['REGISTRO_GENERAL'];
-      if (!sheet) {
-        showToast('No se encontró la hoja REGISTRO_GENERAL en el archivo.', 'error');
-        return;
-      }
-      const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, raw: true});
-      // Fila 0 es encabezado, desde fila 1 son datos
-      const incoming = rows.slice(1).filter(r => r.length > 0 && r[0]).map(parseRow);
-
-      if (incoming.length === 0) {
-        showToast('El archivo no tiene datos en REGISTRO_GENERAL.', 'warn');
-        return;
-      }
-
-      // Detectar duplicados
-      const existingMap = {};
-      DATA.forEach(d => { existingMap[d.ods] = d; });
-
-      pendingNew  = incoming.filter(r => !existingMap[r.ods]);
-      pendingDups = incoming.filter(r =>  existingMap[r.ods]).map(r => ({
-        newRow: r,
-        oldRow: existingMap[r.ods]
-      }));
-
-      if (pendingDups.length === 0) {
-        // Sin duplicados: importar directamente
-        applyImport(pendingNew, []);
-      } else {
-        openDupModal(pendingDups, pendingNew);
-      }
-    } catch(err) {
-      showToast('Error al leer el archivo: ' + err.message, 'error');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-// ── Modal duplicados ──────────────────────────────────────────────────────────
-function openDupModal(dups, news) {
-  document.getElementById('dupDesc').textContent =
-    `Se encontraron ${dups.length} ODS que ya existen en la base de datos y ` +
-    `${news.length} ODS nuevas. Marcá las que querés pisar con los datos del Excel:`;
-
-  document.getElementById('checkAll').checked = false;
-  document.getElementById('dupTableBody').innerHTML = dups.map((d, i) => `
-    <tr>
-      <td style="text-align:center">
-        <input type="checkbox" class="dup-cb" data-idx="${i}">
-      </td>
-      <td><strong>${d.newRow.ods}</strong></td>
-      <td>${d.oldRow.inspector || '—'}</td>
-      <td>${d.newRow.inspector || '—'}</td>
-      <td>${d.oldRow.fecha_generacion || '—'}</td>
-      <td>${d.newRow.fecha_generacion || '—'}</td>
-    </tr>
-  `).join('');
-
-  document.getElementById('dupModal').classList.add('open');
-}
-
-function toggleAll(cb) {
-  document.querySelectorAll('.dup-cb').forEach(c => c.checked = cb.checked);
-}
-
-function cancelImport() {
-  document.getElementById('dupModal').classList.remove('open');
-  pendingNew = []; pendingDups = [];
-  showToast('Importación cancelada.', 'warn');
-}
-
-function confirmImport(useCheckboxes) {
-  let toOverwrite = [];
-  if (useCheckboxes) {
-    document.querySelectorAll('.dup-cb:checked').forEach(cb => {
-      const idx = parseInt(cb.dataset.idx);
-      toOverwrite.push(pendingDups[idx]);
-    });
-  }
-  document.getElementById('dupModal').classList.remove('open');
-  applyImport(pendingNew, toOverwrite);
-  pendingNew = []; pendingDups = [];
-}
-
-function applyImport(news, overwrites) {
-  // Sobrescribir duplicados seleccionados
-  overwrites.forEach(d => {
-    const idx = DATA.findIndex(r => r.ods === d.newRow.ods);
-    if (idx !== -1) {
-      const id = DATA[idx].id;
-      DATA[idx] = {...d.newRow, id};
-    }
-  });
-
-  // Agregar nuevas con ID secuencial
-  const maxId = DATA.reduce((m, d) => Math.max(m, typeof d.id === 'number' ? d.id : 0), 0);
-  news.forEach((r, i) => {
-    r.id = maxId + i + 1;
-    DATA.push(r);
-    newOdsSet.add(r.id);
-  });
-
-  saveData();
-  rebuildFilters();
-  applyFilters();
-
-  const msg = [];
-  if (news.length)       msg.push(`${news.length} ODS agregadas`);
-  if (overwrites.length) msg.push(`${overwrites.length} ODS actualizadas`);
-  showToast(msg.join(' · ') || 'Sin cambios aplicados.', 'success');
-
-  // Quitar el marcado verde después de 8 segundos
-  setTimeout(() => { newOdsSet.clear(); renderTable(); }, 8000);
-}
-
-// ── Render ────────────────────────────────────────────────────────────────────
-function badgeEstado(val) {
-  if (!val) return '<span style="color:#a0aec0">—</span>';
-  const cls = val==='Bueno'?'badge-bueno': val==='Malo'?'badge-malo': val==='Normal'?'badge-normal':'badge-pendiente';
-  return `<span class="badge ${cls}">${val}</span>`;
-}
-
-function buildStats() {
-  const total = DATA.length;
-  const conInspector  = DATA.filter(d => d.inspector).length;
-  const conInspeccion = DATA.filter(d => d.fecha_inspeccion).length;
-  const buenos  = DATA.filter(d => d.estado_conexion === 'Bueno').length;
-  const malos   = DATA.filter(d => d.estado_conexion === 'Malo').length;
-  const distritos = new Set(DATA.map(d => d.distrito).filter(Boolean)).size;
-
-  document.getElementById('statsBar').innerHTML = [
-    {val: total,         lbl: 'Total ODS'},
-    {val: conInspector,  lbl: 'Con Inspector'},
-    {val: conInspeccion, lbl: 'Inspeccionados'},
-    {val: buenos,        lbl: 'Estado Bueno'},
-    {val: malos,         lbl: 'Estado Malo'},
-    {val: distritos,     lbl: 'Distritos'},
-  ].map(s => `<div class="stat-card"><div class="val">${s.val}</div><div class="lbl">${s.lbl}</div></div>`).join('');
-}
-
-function rebuildFilters() {
-  buildStats();
-  const dSel = document.getElementById('filterDistrito');
-  const iSel = document.getElementById('filterInspector');
-  const dVal = dSel.value, iVal = iSel.value;
-
-  dSel.innerHTML = '<option value="">Todos</option>';
-  [...new Set(DATA.map(d => d.distrito).filter(Boolean))].sort((a,b) => a-b)
-    .forEach(d => dSel.innerHTML += `<option value="${d}">${d}</option>`);
-
-  iSel.innerHTML = '<option value="">Todos</option>';
-  [...new Set(DATA.map(d => d.inspector).filter(Boolean))].sort()
-    .forEach(i => iSel.innerHTML += `<option value="${i}">${i}</option>`);
-
-  dSel.value = dVal; iSel.value = iVal;
-}
-
-function applyFilters() {
-  const q    = document.getElementById('searchInput').value.toLowerCase();
-  const dist = document.getElementById('filterDistrito').value;
-  const insp = document.getElementById('filterInspector').value;
-  const est  = document.getElementById('filterEstado').value;
-
-  filtered = DATA.filter(d => {
-    const s = [d.ods, d.inspector, d.nro_serie, d.distrito, d.material, d.movil, d.exp_ref].join(' ').toLowerCase();
-    return (!q || s.includes(q)) &&
-           (!dist || d.distrito === dist) &&
-           (!insp || d.inspector === insp) &&
-           (!est  || d.estado_conexion === est);
-  });
-
-  filtered.sort((a, b) => {
-    let va = a[sortCol]||'', vb = b[sortCol]||'';
-    if (!isNaN(va) && !isNaN(vb)) { va = parseFloat(va)||0; vb = parseFloat(vb)||0; }
-    return va < vb ? (sortAsc?-1:1) : va > vb ? (sortAsc?1:-1) : 0;
-  });
-
-  renderTable();
-}
-
-function renderTable() {
-  const tbody = document.getElementById('tableBody');
-  document.getElementById('countLabel').textContent = `${filtered.length} de ${DATA.length} registros`;
-
-  if (filtered.length === 0) {
-    tbody.innerHTML = '';
-    document.getElementById('noResults').style.display = 'block';
-    return;
-  }
-  document.getElementById('noResults').style.display = 'none';
-
-  tbody.innerHTML = filtered.map(d => `
-    <tr class="${newOdsSet.has(d.id) ? 'new-row' : ''}">
-      <td><strong>${d.ods}</strong>${newOdsSet.has(d.id) ? ' <span style="color:#276749;font-size:0.72rem;font-weight:700">NUEVO</span>':''}</td>
-      <td>${d.fecha_generacion || '—'}</td>
-      <td>${d.fecha_entrega || '—'}</td>
-      <td>${d.fecha_inspeccion || '—'}</td>
-      <td>${d.inspector || '<span style="color:#a0aec0">Sin asignar</span>'}</td>
-      <td><span class="badge badge-pendiente">${d.distrito}</span></td>
-      <td>${d.nro_serie || '—'}</td>
-      <td>${d.material || '—'}</td>
-      <td>${d.lectura || '—'}</td>
-      <td>${badgeEstado(d.funcionamiento)}</td>
-      <td>${badgeEstado(d.estado_conexion)}</td>
-      <td>${d.resid ? d.resid.trim() : '—'}</td>
-      <td><button onclick="openDetail(${JSON.stringify(d.id)})" style="background:#2b6cb0;color:white;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:0.78rem">Ver</button></td>
-    </tr>
-  `).join('');
-}
-
-function sortTable(col) {
-  sortAsc = sortCol === col ? !sortAsc : true;
-  sortCol = col;
-  applyFilters();
-}
-
-function openDetail(id) {
-  const d = DATA.find(x => x.id === id);
-  if (!d) return;
-  document.getElementById('detailTitle').textContent = `ODS ${d.ods}`;
-
-  const sections = [
-    { title: 'Identificación', fields: [
-      ['ODS', d.ods], ['Ubicación Técnica', d.ubicacion_tecnica], ['Expediente Ref.', d.exp_ref],
-      ['N° Serie', d.nro_serie], ['Material', d.material], ['Distrito', d.distrito],
-    ]},
-    { title: 'Fechas', fields: [
-      ['F. Generación', d.fecha_generacion], ['F. Entrega', d.fecha_entrega],
-      ['F. Inspección', d.fecha_inspeccion], ['Hora Llegada', d.hora_llegada], ['Hora Salida', d.hora_salida],
-      ['F. Comunicación', d.fecha_comunicacion],
-    ]},
-    { title: 'Inspección', fields: [
-      ['Inspector', d.inspector], ['Lectura', d.lectura], ['Funcionamiento', d.funcionamiento],
-      ['Estado Conexión', d.estado_conexion], ['Tipo Caja', d.tipo_caja], ['Móvil', d.movil],
-      ['Tipo', d.resid], ['Actividad', d.actividad],
-    ]},
-    { title: 'Condiciones', fields: [
-      ['Precinto', d.precinto], ['Pozo', d.pozo], ['Válvula Retención', d.valvula_retencion],
-      ['Cx. Libres', d.cx_libres], ['Corte', d.corte],
-    ]},
-    { title: 'Gestión', fields: [
-      ['Resuelve', d.resuelve], ['Motivo', d.motivo], ['ZREC', d.zrec],
-      ['ODS Recambio', d.ods_recambio], ['Alto Consumo', d.alto_consumo],
-      ['N° Contacto', d.nro_contacto], ['Observaciones', d.observaciones],
-    ]},
-  ];
-
-  document.getElementById('detailBody').innerHTML = sections.map(s => `
-    <div class="detail-section">
-      <h3>${s.title}</h3>
-      ${s.fields.filter(([,v]) => v).map(([l,v]) => `
-        <div class="detail-row">
-          <span class="lbl">${l}</span><span class="val">${v}</span>
-        </div>`).join('') || '<div style="color:#a0aec0;font-size:0.82rem">Sin datos</div>'}
-    </div>
-  `).join('');
-
-  document.getElementById('detailPanel').classList.add('open');
-}
-
-function closeDetail() {
-  document.getElementById('detailPanel').classList.remove('open');
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.className = 'toast', 3500);
-}
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-document.getElementById('searchInput').addEventListener('input', applyFilters);
-document.getElementById('filterDistrito').addEventListener('change', applyFilters);
-document.getElementById('filterInspector').addEventListener('change', applyFilters);
-document.getElementById('filterEstado').addEventListener('change', applyFilters);
-
-// Cerrar modal de detalle con la tecla Escape
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeDetail();
-});
-
-loadData();
-rebuildFilters();
-applyFilters();
-</script>
 </body>
 </html>
